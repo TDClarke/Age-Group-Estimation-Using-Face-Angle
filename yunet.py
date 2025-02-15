@@ -37,7 +37,10 @@ def detect_face_angle(image_path):
         # Get the landmark points directly (they are already in image coordinates)
         left_eye = landmarks[0]  # Left eye center
         right_eye = landmarks[1]  # Right eye center
-        mouth = landmarks[3]  # Mouth center
+        # Calculate mouth center as average of left and right mouth corners
+        left_mouth = landmarks[3]  # Left mouth corner
+        right_mouth = landmarks[4]  # Right mouth corner
+        mouth = np.mean([left_mouth, right_mouth], axis=0)  # Mouth center
 
         # Extract coordinates
         C1, R1 = left_eye
