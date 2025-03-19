@@ -8,7 +8,7 @@ YUNET_MODEL_PATH = "yunet.onnx"  # Make sure this file exists in the working dir
 face_detector = cv2.FaceDetectorYN.create(
     model=YUNET_MODEL_PATH,  
     config="", 
-    input_size=(960, 645),  # Adjust based on expected input size
+    input_size=(1152, 864),  # Adjust based on expected input size
     score_threshold=0.9,
     nms_threshold=0.3,
     top_k=5000
@@ -31,7 +31,11 @@ def detect_face_angle(image_path):
             raise ValueError("Error: More than one face detected.")
 
         # Extract landmarks
-        x, y, w, h, conf, *landmarks = faces[0]
+        x, y, w, h, *landmarks, conf = faces[0]
+        print("x: ", x, "y: ", y)
+        print("w: ", w, "h: ", h)
+        print("conf: ", conf)
+        print("landmarks: ", *landmarks)
         landmarks = np.array(landmarks).reshape(-1, 2)
         
         # Get the landmark points directly (they are already in image coordinates)
@@ -53,7 +57,7 @@ def detect_face_angle(image_path):
         # Draw landmarks on image
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         plt.scatter([C1, C2, C3], [R1, R1, R2], color='red', s=50)
-        plt.plot([C1, C2, C3], [R1, R1, R2], 'g-')
+        plt.plot([C1, C2, C3, C1], [R1, R1, R2, R1], 'g-')
         plt.show()
 
         # Calculate slopes
@@ -62,6 +66,7 @@ def detect_face_angle(image_path):
 
         # Compute face angle using arctan formula
         A = np.degrees(np.arctan(abs((m1 - m2) / (1 + m1 * m2))))
+        print("A: ", A)
 
         # Display result
         if A < 44: print("< 18")
@@ -74,4 +79,4 @@ def detect_face_angle(image_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-detect_face_angle("kid1.jpg")
+detect_face_angle("test.jpg")

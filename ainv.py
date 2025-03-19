@@ -11,7 +11,6 @@
 #Step 11: Find the face angle (A) using formula: A = tan-1( (m1- m2) / (1 + m1 * m2) )
 #Step 12: Determine age group based on the face angle (A).
 
-
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,7 +36,13 @@ def detect_face_angle(image_path):
 
         # Extract the face region
         x, y, w, h = faces[0]
+        print("x: ", x, " y: ", y)
+        print("w: ", w, " h: ", h)
         face_image = gray[y:y+h, x:x+w]
+        
+        #plt.subplot(2, 3, 1)
+        #plt.imshow(face_image, cmap='gray')
+        #plt.title("Face")
 
         # Step 2: Detect eye region
         eyes = eye_cascade.detectMultiScale(face_image)
@@ -46,50 +51,94 @@ def detect_face_angle(image_path):
 
         # Step 3: Histogram equalization and binary conversion
         face_hist_eq = cv2.equalizeHist(face_image)
+        #plt.subplot(2, 3, 4)
+        #plt.imshow(face_hist_eq, cmap='gray')
+        #plt.title("Equalization (face_hist_eq)")
+        
         _, binary_image = cv2.threshold(face_hist_eq, 128, 255, cv2.THRESH_BINARY)
-
+        
         # Step 4: Divide face into UPART and LPART
         h, w = binary_image.shape
         UPART = binary_image[:h//2, :]
         LPART = binary_image[h//2:, :]
+        
+        #plt.subplot(2, 3, 2)
+        #plt.imshow(UPART, cmap='gray')
+        #plt.title("Upper Face (UPART)")
+        
+        #plt.subplot(2, 3, 3)
+        #plt.imshow(LPART, cmap='gray')
+        #plt.title("Lower Face (LPART)")
 
         # Step 5: Divide UPART into REYE and LEYE
         REYE = UPART[:, :w//2]
         LEYE = UPART[:, w//2:]
+        
+        #plt.subplot(2, 3, 5)
+        #plt.imshow(REYE, cmap='gray')
+        #plt.title("Right Eye (REYE)")
+        
+        #plt.subplot(2, 3, 6)
+        #plt.imshow(LEYE, cmap='gray')
+        #plt.title("Left Eye (LEYE)")
+        
+        plt.show()
 
         # Step 6: Find R1, C1, and C2
-        R1 = np.argmin(np.sum(UPART, axis=1))  # Row with minimum row sum in UPART
-        if np.sum(UPART[R1, :]) == 0:
-            raise ValueError("Error: Unable to determine the upper row for eyes.")
+        R1 = np.argmin(np.sum(UPART, axis=1)) # Row with minimum row sum in UPART
+        #print("Row sums in UPART:", np.sum(UPART, axis=1))
+        print("Selected R1:", R1)
+        #if np.sum(UPART[R1, :]) == 0:
+        #    raise ValueError("Error: Unable to determine the upper row for eyes.")
 
-        C1 = np.argmin(np.sum(REYE, axis=0))  # Column with minimum column sum in REYE
-        if np.sum(REYE[:, C1]) == 0:
-            raise ValueError("Error: Unable to determine the column for the right eye.")
+        #column_sums = np.sum(REYE, axis=0)
+    
+        # Check if there are any non-numeric values
+        #assert not (np.isnan(column_sums)).any(), "There are NaNs in the data"
+    
+        #C1 = np.argmin(np.abs(column_sums))  # Find index of column with minimum sum
+
+
+        C1 = np.argmin(np.sum(REYE, axis=0)) # Column with minimum column sum in REYE
+        #print("Column sums in REYE:", np.sum(REYE, axis=0))
+        print("Selected C1:", C1)
+        #if np.sum(REYE[:, C1]) == 0:
+        #    raise ValueError("Error: Unable to determine the column for the right eye.")
 
         C2 = np.argmin(np.sum(LEYE, axis=0)) + w//2  # Adjust C2 relative to full image
-        if np.sum(LEYE[:, C2 - w//2]) == 0:
-            raise ValueError("Error: Unable to determine the column for the left eye.")
+        #print("Column sums in LEYE:", np.sum(LEYE, axis=0))
+        print("Selected C2:", C2)
+        #if np.sum(LEYE[:, C2 - w//2]) == 0:
+        #    raise ValueError("Error: Unable to determine the column for the left eye.")
 
         # Step 7: Find R2
-        R2 = np.argmin(np.sum(LPART, axis=1)) + h//2  # Adjust R2 relative to full image
-        if np.sum(LPART[R2 - h//2, :]) == 0:
-            raise ValueError("Error: Unable to determine the row for the mouth.")
+        R2 = np.argmin(np.sum(LPART, axis=1)) + h//2  # Adjust R2 relative to full image4
+        print("Selected R2:", R2)
+        #if np.sum(LPART[R2 - h//2, :]) == 0:
+        #    raise ValueError("Error: Unable to determine the row for the mouth.")
 
         # Step 8: Calculate midpoint C3
         C3 = (C1 + C2) // 2
 
         # Step 9: Draw triangle
+        
+        ################## image
         plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        plt.scatter([x + C1, x + C2, x + C3], [y + R1, y + R1, y + R2], color='red', s=50)
-        plt.plot([x + C1, x + C2, x + C3], [y + R1, y + R1, y + R2], 'g-')
+        
+        #plt.scatter([x], [y], color='blue', s=50)
+        #plt.scatter([w], [h], color='yellow', s=50)
+        
+        plt.scatter([x + C1, x + C2, x + C3], [y + R1, y + R1, y + R2], color='red', s=50)        
+        plt.plot([x + C1, x + C2, x + C3, x + C1], [y + R1, y + R1, y + R2, y + R1], 'g-')
         plt.show()
-
+        
         # Step 10: Calculate slopes
         m1 = (R2 - R1) / (C3 - C1) if C3 != C1 else np.inf
         m2 = (R2 - R1) / (C3 - C2) if C3 != C2 else np.inf
 
         # Step 11: Calculate face angle
         A = np.degrees(np.arctan(abs((m1 - m2) / (1 + m1 * m2))))
+        print("A: ", A)
 
         # Step 12: Determine age group based on the face angle (A)
         # Display result
@@ -104,4 +153,4 @@ def detect_face_angle(image_path):
         print(f"An error occurred: {e}")
 
 # Usage
-detect_face_angle("kid1.jpg")
+detect_face_angle("test.jpg")
