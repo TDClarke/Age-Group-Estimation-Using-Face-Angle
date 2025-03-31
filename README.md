@@ -4,7 +4,7 @@ Age Group Estimation Using Face Angle
 Work in progress...
 TODO:
 * Debug ainv.py version further!
-* Allow for multiple face detection in both versions!
+* Allow for multiple face detection in all versions and code so that they are comparable if excercution speed is tested!
 
 Based on: IOSR Journal of Computer Engineering (IOSRJCE)
 ISSN: 2278-0661, ISBN: 2278-8727 Volume 7, Issue 5 (Nov-Dec. 2012), PP 35-39
